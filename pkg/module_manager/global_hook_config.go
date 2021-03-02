@@ -7,8 +7,11 @@ import (
 	"sigs.k8s.io/yaml"
 
 	. "github.com/flant/addon-operator/pkg/hook/types"
+	"github.com/flant/addon-operator/pkg/module_manager/go_hook"
+
 	. "github.com/flant/shell-operator/pkg/hook/types"
 
+	"github.com/flant/shell-operator/pkg/hook"
 	"github.com/flant/addon-operator/sdk"
 	"github.com/flant/shell-operator/pkg/hook/config"
 	"github.com/flant/shell-operator/pkg/kube_events_manager"
@@ -230,7 +233,7 @@ func (c *GlobalHookConfig) BindingsCount() int {
 	return res
 }
 
-func NewGlobalHookConfigFromGoConfig(input *sdk.HookConfig) *GlobalHookConfig {
+func NewGlobalHookConfigFromGoConfig(input *go_hook.HookConfig) *GlobalHookConfig {
 	cfg := &GlobalHookConfig{
 		HookConfig: NewHookConfigFromGoConfig(input),
 	}
@@ -250,8 +253,8 @@ func NewGlobalHookConfigFromGoConfig(input *sdk.HookConfig) *GlobalHookConfig {
 	return cfg
 }
 
-func NewHookConfigFromGoConfig(input *sdk.HookConfig) config.HookConfig {
-	c := &config.HookConfig{
+func NewHookConfigFromGoConfig(input *go_hook.HookConfig) hook.HookConfig {
+	c := &hook.HookConfig{
 		Version:            "v1",
 		Schedules:          []ScheduleConfig{},
 		OnKubernetesEvents: []OnKubernetesEventConfig{},

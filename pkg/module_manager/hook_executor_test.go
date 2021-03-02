@@ -7,34 +7,32 @@ import (
 
 	. "github.com/flant/shell-operator/pkg/hook/binding_context"
 
-	"github.com/flant/addon-operator/pkg/utils"
-	"github.com/flant/addon-operator/sdk"
-	"github.com/flant/addon-operator/sdk/registry"
 	metric_operation "github.com/flant/shell-operator/pkg/metric_storage/operation"
+
+	"github.com/flant/addon-operator/pkg/module_manager/go_hook"
+	"github.com/flant/addon-operator/pkg/utils"
+	"github.com/flant/addon-operator/sdk/registry"
 )
 
 type SimpleHook struct {
 }
 
-func (s *SimpleHook) Metadata() sdk.HookMetadata {
-	return sdk.HookMetadata{
+func (s *SimpleHook) Metadata() go_hook.HookMetadata {
+	return go_hook.HookMetadata{
 		Name:   "simple",
 		Path:   "simple",
 		Global: true,
 	}
 }
 
-func (s *SimpleHook) Config() (config *sdk.HookConfig) {
-	return &sdk.HookConfig{
-		YamlConfig: `
-configVersion: v1
-onStartup: 10
-`,
+func (s *SimpleHook) Config() (config *go_hook.HookConfig) {
+	return &go_hook.HookConfig{
+		OnStartup: &go_hook.OrderedConfig{Order: 10},
 	}
 }
 
-func (s *SimpleHook) Run(input *sdk.HookInput) (output *sdk.HookOutput, err error) {
-	return &sdk.HookOutput{
+func (s *SimpleHook) Run(bindingContexts []BindingContext, values, configValues utils.Values, logLabels map[string]string) (output *go_hook.HookOutput, err error) {
+	return &go_hook.HookOutput{
 		MemoryValuesPatches: new(utils.ValuesPatch),
 		Metrics: []metric_operation.MetricOperation{
 			metric_operation.MetricOperation{},
@@ -48,7 +46,7 @@ func Test_Config_GoHook(t *testing.T) {
 
 	goHook := &SimpleHook{}
 
-	goHookRegistry := registry.NewRegistry()
+	goHookRegistry := registry.Registry()
 	goHookRegistry.Add(goHook)
 
 	moduleManager := NewMainModuleManager()

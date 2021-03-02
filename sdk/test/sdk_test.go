@@ -3,6 +3,8 @@ package test
 import (
 	"testing"
 
+	"github.com/flant/addon-operator/pkg/module_manager/go_hook"
+
 	// Define Register func and Registry object.
 	"github.com/flant/addon-operator/sdk/registry"
 
@@ -10,8 +12,6 @@ import (
 	_ "github.com/flant/addon-operator/sdk/test/simple_operator/global-hooks"
 	_ "github.com/flant/addon-operator/sdk/test/simple_operator/modules/001-module-one/hooks"
 	_ "github.com/flant/addon-operator/sdk/test/simple_operator/modules/002-module-two/hooks/level1/sublevel"
-
-	"github.com/flant/addon-operator/sdk"
 
 	. "github.com/onsi/gomega"
 )
@@ -23,7 +23,7 @@ func Test_HookMetadata_from_runtime(t *testing.T) {
 
 	g.Expect(len(hookList)).Should(Equal(3))
 
-	hooks := map[string]sdk.HookMetadata{}
+	hooks := map[string]go_hook.HookMetadata{}
 
 	for _, h := range hookList {
 		hm := h.Metadata()

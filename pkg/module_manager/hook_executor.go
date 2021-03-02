@@ -16,7 +16,6 @@ import (
 
 	"github.com/flant/addon-operator/pkg/helm"
 	"github.com/flant/addon-operator/pkg/utils"
-	"github.com/flant/addon-operator/sdk"
 )
 
 type HookExecutor struct {
@@ -139,20 +138,13 @@ func (e *HookExecutor) RunGoHook() (result *HookResult, err error) {
 		return
 	}
 
-	// prepare hook input
-	input := &sdk.HookInput{
-		BindingContexts: e.Context,
-		ConfigValues:    e.Hook.GetConfigValues(),
-		LogLabels:       e.LogLabels,
-	}
-
 	// Values are patched in-place, so an error can occur.
-	input.Values, err = e.Hook.GetValues()
+	values, err := e.Hook.GetValues()
 	if err != nil {
 		return nil, err
 	}
 
-	output, err := goHook.Run(input)
+	output, err := goHook.Run(e.Context, values, e.Hook.GetConfigValues(), e.LogLabels)
 	if err != nil {
 		return nil, err
 	}

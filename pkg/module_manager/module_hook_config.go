@@ -6,9 +6,12 @@ import (
 	"github.com/go-openapi/spec"
 	"sigs.k8s.io/yaml"
 
-	. "github.com/flant/addon-operator/pkg/hook/types"
 	. "github.com/flant/shell-operator/pkg/hook/types"
 
+	. "github.com/flant/addon-operator/pkg/hook/types"
+	"github.com/flant/addon-operator/pkg/module_manager/go_hook"
+
+	sh_op_hook "github.com/flant/shell-operator/pkg/hook"
 	"github.com/flant/addon-operator/sdk"
 	"github.com/flant/shell-operator/pkg/hook/config"
 )
@@ -261,7 +264,7 @@ func (c *ModuleHookConfig) BindingsCount() int {
 	return res
 }
 
-func NewModuleHookConfigFromGoConfig(input *sdk.HookConfig) *ModuleHookConfig {
+func NewModuleHookConfigFromGoConfig(input *go_hook.HookConfig) *ModuleHookConfig {
 	cfg := &ModuleHookConfig{
 		HookConfig: NewHookConfigFromGoConfig(input),
 	}

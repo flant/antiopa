@@ -14,8 +14,9 @@ import (
 	. "github.com/flant/shell-operator/pkg/hook/types"
 
 	. "github.com/flant/addon-operator/pkg/hook/types"
+	"github.com/flant/addon-operator/pkg/module_manager/go_hook"
+
 	"github.com/flant/addon-operator/pkg/utils"
-	"github.com/flant/addon-operator/sdk"
 )
 
 type GlobalHook struct {
@@ -49,7 +50,7 @@ func (g *GlobalHook) WithConfig(configOutput []byte) (err error) {
 	return nil
 }
 
-func (g *GlobalHook) WithGoConfig(config *sdk.HookConfig) (err error) {
+func (g *GlobalHook) WithGoConfig(config *go_hook.HookConfig) (err error) {
 	g.Config = NewGlobalHookConfigFromGoConfig(config)
 	// Make HookController and GetConfigDescription work.
 	g.Hook.Config = &g.Config.HookConfig
