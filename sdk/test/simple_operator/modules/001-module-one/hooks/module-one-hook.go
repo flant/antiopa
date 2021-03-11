@@ -5,14 +5,5 @@ import (
 	"github.com/flant/addon-operator/sdk"
 )
 
-func init() {
-	sdk.Register(&ModuleOneHook{})
-}
-
-type ModuleOneHook struct {
-	sdk.CommonGoHook
-}
-
-func (h *ModuleOneHook) Metadata() go_hook.HookMetadata {
-	return h.CommonGoHook.Metadata()
-}
+var ModuleOneHook = sdk.NewCommonGoHook(&go_hook.HookConfig{})
+var _ = sdk.Register(ModuleOneHook)

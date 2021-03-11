@@ -11,8 +11,6 @@ import (
 
 	. "github.com/flant/shell-operator/pkg/hook/types"
 
-	"github.com/flant/shell-operator/pkg/hook"
-	"github.com/flant/addon-operator/sdk"
 	"github.com/flant/shell-operator/pkg/hook/config"
 	"github.com/flant/shell-operator/pkg/kube_events_manager"
 	"github.com/flant/shell-operator/pkg/schedule_manager/types"
@@ -253,8 +251,8 @@ func NewGlobalHookConfigFromGoConfig(input *go_hook.HookConfig) *GlobalHookConfi
 	return cfg
 }
 
-func NewHookConfigFromGoConfig(input *go_hook.HookConfig) hook.HookConfig {
-	c := &hook.HookConfig{
+func NewHookConfigFromGoConfig(input *go_hook.HookConfig) config.HookConfig {
+	c := &config.HookConfig{
 		Version:            "v1",
 		Schedules:          []ScheduleConfig{},
 		OnKubernetesEvents: []OnKubernetesEventConfig{},

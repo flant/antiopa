@@ -284,7 +284,7 @@ func (mm *moduleManager) RegisterGlobalHooks() error {
 		if globalHook.GoHook != nil {
 			goConfig = globalHook.GoHook.Config()
 		} else {
-			yamlConfigBytes, err = NewHookExecutor(globalHook, nil, "").Config()
+			yamlConfigBytes, err = NewHookExecutor(globalHook, nil, "", mm.KubeObjectPatcher).Config()
 			if err != nil {
 				logEntry.Errorf("Run --config: %s", err)
 				return fmt.Errorf("global hook --config run problem")
@@ -389,7 +389,7 @@ func (mm *moduleManager) RegisterModuleHooks(module *Module, logLabels map[strin
 		if moduleHook.GoHook != nil {
 			goConfig = moduleHook.GoHook.Config()
 		} else {
-			yamlConfigBytes, err = NewHookExecutor(moduleHook, nil, "").Config()
+			yamlConfigBytes, err = NewHookExecutor(moduleHook, nil, "", mm.KubeObjectPatcher).Config()
 			if err != nil {
 				hookLogEntry.Errorf("Run --config: %s", err)
 				return fmt.Errorf("module hook --config run problem")

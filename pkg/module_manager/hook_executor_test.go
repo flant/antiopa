@@ -3,6 +3,7 @@ package module_manager
 import (
 	"testing"
 
+	"github.com/flant/shell-operator/pkg/kube/object_patch"
 	. "github.com/onsi/gomega"
 
 	. "github.com/flant/shell-operator/pkg/hook/binding_context"
@@ -17,8 +18,8 @@ import (
 type SimpleHook struct {
 }
 
-func (s *SimpleHook) Metadata() go_hook.HookMetadata {
-	return go_hook.HookMetadata{
+func (s *SimpleHook) Metadata() *go_hook.HookMetadata {
+	return &go_hook.HookMetadata{
 		Name:   "simple",
 		Path:   "simple",
 		Global: true,
@@ -31,7 +32,9 @@ func (s *SimpleHook) Config() (config *go_hook.HookConfig) {
 	}
 }
 
-func (s *SimpleHook) Run(bindingContexts []BindingContext, values, configValues utils.Values, logLabels map[string]string) (output *go_hook.HookOutput, err error) {
+func (s *SimpleHook) Run(bindingContexts []BindingContext, values, configValues utils.Values, objectPatcher *object_patch.ObjectPatcher,
+	logLabels map[string]string) (output *go_hook.HookOutput, err error) {
+
 	return &go_hook.HookOutput{
 		MemoryValuesPatches: new(utils.ValuesPatch),
 		Metrics: []metric_operation.MetricOperation{
@@ -59,7 +62,7 @@ func Test_Config_GoHook(t *testing.T) {
 
 	bc := []BindingContext{}
 
-	e := NewHookExecutor(gh, bc, "v1")
+	e := NewHookExecutor(gh, bc, "v1", nil)
 	res, err := e.Run()
 	g.Expect(err).ShouldNot(HaveOccurred())
 	g.Expect(res.Patches).ShouldNot(BeEmpty())

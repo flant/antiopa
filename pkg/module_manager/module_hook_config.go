@@ -11,8 +11,6 @@ import (
 	. "github.com/flant/addon-operator/pkg/hook/types"
 	"github.com/flant/addon-operator/pkg/module_manager/go_hook"
 
-	sh_op_hook "github.com/flant/shell-operator/pkg/hook"
-	"github.com/flant/addon-operator/sdk"
 	"github.com/flant/shell-operator/pkg/hook/config"
 )
 

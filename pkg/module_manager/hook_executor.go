@@ -28,16 +28,18 @@ type HookExecutor struct {
 	ConfigValuesPatchPath string
 	ValuesPatchPath       string
 	MetricsPath           string
+	ObjectPatcher         *object_patch.ObjectPatcher
 	KubernetesPatchPath   string
 	LogLabels             map[string]string
 }
 
-func NewHookExecutor(h Hook, context []BindingContext, configVersion string) *HookExecutor {
+func NewHookExecutor(h Hook, context []BindingContext, configVersion string, objectPatcher *object_patch.ObjectPatcher) *HookExecutor {
 	return &HookExecutor{
 		Hook:          h,
 		Context:       context,
 		ConfigVersion: configVersion,
 		LogLabels:     map[string]string{},
+		ObjectPatcher: objectPatcher,
 	}
 }
 
@@ -54,7 +56,7 @@ type HookResult struct {
 
 func (e *HookExecutor) Run() (result *HookResult, err error) {
 	if e.Hook.GetGoHook() != nil {
-		return e.RunGoHook()
+		return e.RunGoHook(e.ObjectPatcher)
 	}
 
 	result = &HookResult{
@@ -132,7 +134,7 @@ func (e *HookExecutor) Run() (result *HookResult, err error) {
 	return result, nil
 }
 
-func (e *HookExecutor) RunGoHook() (result *HookResult, err error) {
+func (e *HookExecutor) RunGoHook(objectPatcher *object_patch.ObjectPatcher) (result *HookResult, err error) {
 	goHook := e.Hook.GetGoHook()
 	if goHook == nil {
 		return
@@ -144,7 +146,7 @@ func (e *HookExecutor) RunGoHook() (result *HookResult, err error) {
 		return nil, err
 	}
 
-	output, err := goHook.Run(e.Context, values, e.Hook.GetConfigValues(), e.LogLabels)
+	output, err := goHook.Run(e.Context, values, e.Hook.GetConfigValues(), objectPatcher, e.LogLabels)
 	if err != nil {
 		return nil, err
 	}

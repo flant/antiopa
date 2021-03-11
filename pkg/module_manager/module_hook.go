@@ -13,7 +13,6 @@ import (
 	. "github.com/flant/shell-operator/pkg/hook/binding_context"
 	. "github.com/flant/shell-operator/pkg/hook/types"
 
-	. "github.com/flant/addon-operator/pkg/hook/types"
 	"github.com/flant/addon-operator/pkg/module_manager/go_hook"
 
 	. "github.com/flant/addon-operator/pkg/hook/types"
@@ -146,7 +145,7 @@ func (h *ModuleHook) Run(bindingType BindingType, context []BindingContext, logL
 	// Convert context for version
 	//versionedContextList := ConvertBindingContextList(h.Config.Version, context)
 
-	moduleHookExecutor := NewHookExecutor(h, context, h.Config.Version)
+	moduleHookExecutor := NewHookExecutor(h, context, h.Config.Version, h.moduleManager.KubeObjectPatcher)
 	moduleHookExecutor.WithLogLabels(logLabels)
 	hookResult, err := moduleHookExecutor.Run()
 	if hookResult != nil && hookResult.Usage != nil {

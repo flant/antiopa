@@ -7,15 +7,12 @@ import (
 )
 
 type Filterable interface {
-	FilterSelf(*unstructured.Unstructured) (interface{}, error)
+	FilterSelf(*unstructured.Unstructured) interface{}
 }
 
 func WrapFilterable(filterable Filterable) func(unstructured *unstructured.Unstructured) (string, error) {
 	return func(obj *unstructured.Unstructured) (string, error) {
-		filteredObj, err := filterable.FilterSelf(obj)
-		if err != nil {
-			return "", err
-		}
+		filteredObj := filterable.FilterSelf(obj)
 
 		returnObj, err := json.Marshal(filteredObj)
 		if err != nil {

@@ -1,8 +1,8 @@
 package go_hook
 
 import (
-	"github.com/Jeffail/gabs"
 	"github.com/flant/shell-operator/pkg/hook/binding_context"
+	"github.com/flant/shell-operator/pkg/kube/object_patch"
 	"github.com/flant/shell-operator/pkg/kube_events_manager/types"
 	"github.com/flant/shell-operator/pkg/metric_storage/operation"
 	log "github.com/sirupsen/logrus"
@@ -12,41 +12,11 @@ import (
 	"github.com/flant/addon-operator/pkg/utils"
 )
 
-type PatchableValues struct {
-	Values      *gabs.Container
-	valuesPatch *utils.ValuesPatch
-}
-
-func NewPatchableValues(values map[string]interface{}) (*PatchableValues, error) {
-	gabsContainer, err := gabs.Consume(values)
-	if err != nil {
-		return nil, err
-	}
-
-	return &PatchableValues{Values: gabsContainer, valuesPatch: utils.NewValuesPatch()}, nil
-}
-
-func (p *PatchableValues) Set(path string, value interface{}) {
-	op := &utils.ValuesPatchOperation{
-		Op:    "add",
-		Path:  path,
-		Value: value,
-	}
-
-	p.valuesPatch.Operations = append(p.valuesPatch.Operations, op)
-}
-
-func (p *PatchableValues) Remove(path string) {
-	op := &utils.ValuesPatchOperation{
-		Op:   "remove",
-		Path: path,
-	}
-
-	p.valuesPatch.Operations = append(p.valuesPatch.Operations, op)
-}
-
-func (p *PatchableValues) GetPatches() *utils.ValuesPatch {
-	return p.valuesPatch
+type GoHook interface {
+	Metadata() *HookMetadata
+	Config() *HookConfig
+	Run(bindingContexts []binding_context.BindingContext, values, configValues utils.Values,
+		objectPatcher *object_patch.ObjectPatcher, logLabels map[string]string) (output *HookOutput, err error)
 }
 
 type HookMetadata struct {
@@ -61,6 +31,7 @@ type HookInput struct {
 	BindingContext binding_context.BindingContext
 	Values         *PatchableValues
 	ConfigValues   *PatchableValues
+	ObjectPatcher  *object_patch.ObjectPatcher
 	LogLabels      map[string]string
 	LogEntry       *log.Entry
 	Envs           map[string]string
@@ -150,10 +121,4 @@ type Handlers struct {
 	OnBeforeHelm      func()
 	OnAfterHelm       func()
 	OnAfterDeleteHelm func()
-}
-
-type GoHook interface {
-	Metadata() *HookMetadata
-	Config() *HookConfig
-	Run(bindingContexts []binding_context.BindingContext, values, configValues utils.Values, logLabels map[string]string) (output *HookOutput, err error)
 }

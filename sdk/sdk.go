@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"runtime"
 
+	"github.com/flant/shell-operator/pkg/kube/object_patch"
 	log "github.com/sirupsen/logrus"
 
 	hooktypes "github.com/flant/addon-operator/pkg/hook/types"
@@ -38,7 +39,8 @@ var moduleRe = regexp.MustCompile(`/modules/(([^/]+)/hooks/([^/]+/)*([^/]+))$`)
 var moduleNameRe = regexp.MustCompile(`^[0-9][0-9][0-9]-(.*)$`)
 
 type CommonGoHook struct {
-	config *go_hook.HookConfig
+	ObjectPatcher *object_patch.ObjectPatcher
+	config        *go_hook.HookConfig
 }
 
 func NewCommonGoHook(config *go_hook.HookConfig) *CommonGoHook {
@@ -82,7 +84,11 @@ func (*CommonGoHook) Metadata() *go_hook.HookMetadata {
 }
 
 // Run executes a handler like in BindingContext.MapV1 or in framework/shell.
-func (h *CommonGoHook) Run(bindingContexts []binding_context.BindingContext, values, configValues utils.Values, logLabels map[string]string) (*go_hook.HookOutput, error) {
+func (h *CommonGoHook) Run(bindingContexts []binding_context.BindingContext, values, configValues utils.Values,
+	objectPatcher *object_patch.ObjectPatcher, logLabels map[string]string) (*go_hook.HookOutput, error) {
+
+	h.ObjectPatcher = objectPatcher
+
 	logEntry := log.WithFields(utils.LabelsToLogFields(logLabels)).
 		WithField("output", "golang")
 

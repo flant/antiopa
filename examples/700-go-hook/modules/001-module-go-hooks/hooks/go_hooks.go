@@ -1,74 +1,51 @@
 package hooks
 
 import (
-	"fmt"
 	"time"
 
+	"github.com/flant/shell-operator/pkg/hook/binding_context"
+	"github.com/flant/shell-operator/pkg/kube/object_patch"
 	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	"github.com/flant/addon-operator/pkg/module_manager"
+	"github.com/flant/addon-operator/pkg/module_manager/go_hook"
 	"github.com/flant/addon-operator/pkg/utils"
-	"github.com/flant/addon-operator/pkg/utils/values_store"
 	"github.com/flant/addon-operator/sdk"
 
-	"github.com/flant/shell-operator/pkg/app"
-	"github.com/flant/shell-operator/pkg/kube"
 	"github.com/flant/shell-operator/pkg/kube_events_manager/types"
 	"github.com/flant/shell-operator/pkg/metric_storage/operation"
 )
 
-var _ = sdk.Register(&GoHook{})
-
-type GoHook struct {
-	sdk.CommonGoHook
-	kubeClient kube.KubernetesClient
-}
-
 type podSpecFilteredObj v1.PodSpec
 
-func (ps *podSpecFilteredObj) FilterSelf(obj *unstructured.Unstructured) (interface{}, error) {
-	runtimeObject, err := sdk.Convert(obj)
-	if err != nil {
-		return "", err
-	}
-
-	return runtimeObject.(*v1.Pod).Spec, nil
+func (ps *podSpecFilteredObj) FilterSelf(obj *unstructured.Unstructured) interface{} {
+	return obj.DeepCopyObject().(*v1.Pod)
 }
 
-func (h *GoHook) Metadata() module_manager.HookMetadata {
-	return module_manager.HookMetadata{
-		Name:       "go_hook.go",
-		Path:       "001-module-go-hooks/hooks/go_hook.go",
-		Module:     true,
-		ModuleName: "module-go-hooks",
-	}
-}
+type GoHook struct{}
 
-func (h *GoHook) Config() *module_manager.HookConfig {
-	return h.CommonGoHook.Config(&module_manager.HookConfig{
-		OnStartup: &module_manager.OrderedConfig{
+var _ = sdk.Register(&GoHook{})
+
+func (h *GoHook) Config() *go_hook.HookConfig {
+	return &go_hook.HookConfig{
+		OnStartup: &go_hook.OrderedConfig{
 			Order: 10,
-			Handler: func(input *module_manager.BindingInput) (*module_manager.BindingOutput, error) {
+			Handler: func(input *go_hook.HookInput) (*go_hook.HookOutput, error) {
 				input.LogEntry.Infof("Hello from module 'hooks-only' golang hook 'go_hooks'!\n")
 				return nil, nil
 			},
 		},
 
-		OnBeforeHelm: &module_manager.OrderedConfig{
+		OnBeforeHelm: &go_hook.OrderedConfig{
 			Order: 10,
-			Handler: func(input *module_manager.BindingInput) (*module_manager.BindingOutput, error) {
+			Handler: func(input *go_hook.HookInput) (*go_hook.HookOutput, error) {
 				input.LogEntry.Infof("Hello from module 'hooks-only' golang hook 'go_hooks' beforeHelm!\n")
-				vs := values_store.NewValuesStoreFromValues(input.Values)
-
-				input.LogEntry.Infof("go_hooks beforeHelm hook got values: %s", vs.GetAsYaml())
-
+				input.LogEntry.Infof("go_hooks beforeHelm hook got values: %s", input.Values.Values.String())
 				return nil, nil
 			},
 		},
 
-		Kubernetes: []module_manager.KubernetesConfig{
+		Kubernetes: []go_hook.KubernetesConfig{
 			{
 				Name:       "pods-for-hooks-only",
 				ApiVersion: "v1",
@@ -78,7 +55,7 @@ func (h *GoHook) Config() *module_manager.HookConfig {
 				FilterFunc:                   sdk.WrapFilterable(&podSpecFilteredObj{}),
 				ExecuteHookOnEvents:          []types.WatchEventType{types.WatchEventAdded, types.WatchEventModified, types.WatchEventDeleted},
 				ExecuteHookOnSynchronization: true,
-				Handler: func(input *module_manager.BindingInput) (*module_manager.BindingOutput, error) {
+				Handler: func(input *go_hook.HookInput) (*go_hook.HookOutput, error) {
 					for _, o := range input.BindingContext.Snapshots["pods"] {
 						var podSpec podSpecFilteredObj
 						err := sdk.UnmarshalFilteredObject(o.FilterResult, &podSpec)
@@ -91,70 +68,45 @@ func (h *GoHook) Config() *module_manager.HookConfig {
 						len(input.BindingContext.Snapshots),
 						input.BindingContext.WatchEvent)
 
-					vs := values_store.NewValuesStoreFromValues(input.Values)
-
-					input.LogEntry.Infof("go_hooks kube hook got values: %s", vs.GetAsYaml())
+					input.LogEntry.Infof("go_hooks kube hook got values: %s", input.Values.Values.String())
 
 					return nil, nil
 				},
 			},
 		},
 
-		Schedule: []module_manager.ScheduleConfig{
+		Schedule: []go_hook.ScheduleConfig{
 			{
 				Name:    "metrics",
 				Crontab: "*/5 * * * * *",
+				Group:   "pods",
 				Handler: h.SendMetrics,
 			},
 		},
-	})
+	}
 }
 
-// Go hook has no kubectl, but it can initialize its own kubernetes client!
-func (h *GoHook) initKubeClient() error {
-	if h.kubeClient != nil {
-		return nil
+func (h *GoHook) Metadata() *go_hook.HookMetadata {
+	return &go_hook.HookMetadata{
+		Name:       "go_hook.go",
+		Path:       "001-module-go-hooks/hooks/go_hook.go",
+		Module:     true,
+		ModuleName: "module-go-hooks",
 	}
-
-	h.kubeClient = kube.NewKubernetesClient()
-	h.kubeClient.WithContextName(app.KubeContext)
-	h.kubeClient.WithConfigPath(app.KubeConfig)
-	h.kubeClient.WithRateLimiterSettings(app.KubeClientQps, app.KubeClientBurst)
-	// Initialize kube client for kube events hooks.
-	err := h.kubeClient.Init()
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
-func (h *GoHook) SendMetrics(input *module_manager.BindingInput) (*module_manager.BindingOutput, error) {
-	err := h.initKubeClient()
-	if err != nil {
-		input.LogEntry.Errorf("Fatal: initialize kube client: %s", err)
-		return nil, err
-	}
+func (h *GoHook) Run(bindingContexts []binding_context.BindingContext, values, configValues utils.Values,
+	objectPatcher *object_patch.ObjectPatcher, logLabels map[string]string) (*go_hook.HookOutput, error) {
+	return nil, nil
+}
 
-	podList, err := h.kubeClient.CoreV1().Pods("").List(metav1.ListOptions{})
-	if err != nil {
-		input.LogEntry.Errorf("Fatal: cannot list pods: %s", err)
-		return nil, err
-	}
-
-	input.LogEntry.Infof("Get %d pods:", len(podList.Items))
-	for i, pod := range podList.Items {
-		input.LogEntry.Infof("%02d. Pod/%s in ns/%s", i, pod.Name, pod.Namespace)
-	}
-
+func (h *GoHook) SendMetrics(input *go_hook.HookInput) (*go_hook.HookOutput, error) {
 	input.LogEntry.Infof("Hello from on_kube.pods2! I have %d snapshots for '%s' event\n",
 		len(input.BindingContext.Snapshots),
 		input.BindingContext.WatchEvent)
+	input.LogEntry.Infof("go_hooks schedule hook got values: %s", input.Values.Values.String())
 
-	vs := values_store.NewValuesStoreFromValues(input.Values)
-
-	input.LogEntry.Infof("go_hooks schedule hook got values: %s", vs.GetAsYaml())
-
-	out := &module_manager.BindingOutput{
+	out := &go_hook.HookOutput{
 		Metrics: []operation.MetricOperation{},
 	}
 
@@ -164,24 +116,11 @@ func (h *GoHook) SendMetrics(input *module_manager.BindingInput) (*module_manage
 		Add:  &v,
 	})
 
-	out.ConfigValuesPatches = &utils.ValuesPatch{
-		[]*utils.ValuesPatchOperation{
-			{
-				Op:    "add",
-				Path:  "/moduleGoHooks/time",
-				Value: fmt.Sprintf("%d", time.Now().Unix()),
-			},
-		},
-	}
+	input.ConfigValues.Set("moduleGoHooks.time", time.Now().Unix())
+	input.Values.Set("moduleGoHooks.time_temp", time.Now().Unix())
 
-	out.MemoryValuesPatches = &utils.ValuesPatch{
-		[]*utils.ValuesPatchOperation{
-			{
-				Op:    "add",
-				Path:  "/moduleGoHooks/time_temp",
-				Value: fmt.Sprintf("%d", time.Now().Unix()),
-			},
-		},
-	}
+	out.ConfigValuesPatches.Operations = input.ConfigValues.GetPatches()
+	out.ConfigValuesPatches.Operations = input.ConfigValues.GetPatches()
+
 	return out, nil
 }

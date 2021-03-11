@@ -3,7 +3,7 @@ module github.com/flant/addon-operator
 go 1.12
 
 require (
-	github.com/Jeffail/gabs v1.4.0 // indirect
+	github.com/Jeffail/gabs v1.4.0
 	github.com/davecgh/go-spew v1.1.1
 	github.com/evanphx/json-patch v4.9.0+incompatible
 	github.com/flant/shell-operator v1.0.0-rc.2.0.20210309133328-81e5d893a769 // branch: master
@@ -36,4 +36,4 @@ require (
 
 replace github.com/go-openapi/validate => github.com/flant/go-openapi-validate v0.19.4-0.20200313141509-0c0fba4d39e1 // branch: fix_in_body_0_19_7
 
-replace github.com/flant/shell-operator => /home/zuzzas/projects/go/shell-operator
+replace github.com/flant/shell-operator => github.com/flant/shell-operator v1.0.0-rc.2.0.20210309122634-0050ebd346e7

@@ -146,7 +146,7 @@ func (h *GlobalHook) Run(bindingType BindingType, bindingContext []BindingContex
 	// Convert bindingContext for version
 	//versionedContextList := ConvertBindingContextList(h.Config.Version, bindingContext)
 
-	globalHookExecutor := NewHookExecutor(h, bindingContext, h.Config.Version)
+	globalHookExecutor := NewHookExecutor(h, bindingContext, h.Config.Version, h.moduleManager.KubeObjectPatcher)
 	globalHookExecutor.WithLogLabels(logLabels)
 	hookResult, err := globalHookExecutor.Run()
 	if hookResult != nil && hookResult.Usage != nil {
