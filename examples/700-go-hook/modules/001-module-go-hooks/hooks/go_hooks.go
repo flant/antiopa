@@ -18,8 +18,8 @@ import (
 
 type podSpecFilteredObj v1.PodSpec
 
-func (ps *podSpecFilteredObj) FilterSelf(obj *unstructured.Unstructured) interface{} {
-	return obj.DeepCopyObject().(*v1.Pod)
+func (ps *podSpecFilteredObj) FilterSelf(obj *unstructured.Unstructured) (interface{}, error) {
+	return obj.DeepCopyObject().(*v1.Pod), nil
 }
 
 type GoHook struct{}
